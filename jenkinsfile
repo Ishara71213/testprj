@@ -1,6 +1,10 @@
 pipeline {
     agent any
 
+    options {
+        skipStagesAfterUnstable()
+    }
+
     environment {
         IMAGE_NAME = "ishara777/testprj"
         IMAGE_TAG = "${BUILD_NUMBER}"
@@ -20,6 +24,20 @@ pipeline {
                 echo "Starting source code checkout..."
                 git 'https://github.com/Ishara71213/testprj.git'
                 echo "Source code checkout completed successfully."
+            }
+        }
+
+        stage('Run Unit Tests') {
+            steps {
+                echo "Running unit tests..."
+                bat 'mvn test'
+                echo "Unit tests completed."
+            }
+
+            post {
+                always {
+                    junit 'target/surefire-reports/*.xml'
+                }
             }
         }
 
