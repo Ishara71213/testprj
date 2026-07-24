@@ -1,0 +1,41 @@
+version: "3"
+
+services:
+
+  mysql-db:
+    image: mysql:oraclelinux9
+    container_name: mysql-db
+    command: --port=3345
+    environment:
+      MYSQL_DATABASE: testprj_db
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
+    ports:
+      - "3345:3306"
+    networks:
+      - test-network
+    volumes:
+      - mysql-data:/var/lib/mysql
+
+  testprj:
+    # build:
+    #   context: .
+    #   dockerfile: Dockerfile
+    image: ishara777/testprj:${IMAGE_TAG}
+    container_name: testprj
+    ports:
+      - "8081:8081"
+    environment:
+      DB_URL: ${DB_URL}
+      DB_USERNAME: ${DB_USERNAME}
+      DB_PASSWORD: ${DB_PASSWORD}
+    depends_on:
+      - mysql-db
+    networks:
+      - test-network
+
+networks:
+  test-network:
+    driver: bridge
+
+volumes:
+  mysql-data:

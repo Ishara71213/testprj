@@ -20,4 +20,7 @@ docker exec -it testprj /bin/bash
 
 docker run -d -p 8081:8081 -e DB_URL=jdbc:mysql://mysql-db:3345/testprj_db -e DB_USERNAME=root -e DB_PASSWORD=1234 --name testprj --net test-network testprj:1.0
 
-# Run docker image
+docker build -t testprj:1.1 .
+docker build -t ishara777/testprj:1.1 .
+
+IMAGE_TAG=1.2.0 docker-compose -f dockercompose.yaml up -d
