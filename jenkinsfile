@@ -1,0 +1,120 @@
+pipeline {
+    agent any
+
+    environment {
+        IMAGE_NAME = "ishara777/testprj"
+        IMAGE_TAG = "${BUILD_NUMBER}"
+        DB_URL = "jdbc:mysql://mysql-db:3345/testprj_db"
+        DB_USERNAME = "root"
+        DB_PASSWORD = "1234"
+    }
+    
+    triggers {
+        cron('H/30 * * * *')
+    }
+    
+    stages {
+
+        stage('Checkout') {
+            steps {
+                echo "Starting source code checkout..."
+                git 'https://github.com/Ishara71213/testprj.git'
+                echo "Source code checkout completed successfully."
+            }
+        }
+
+        stage('Build Application') {
+            steps {
+                echo "Building Spring Boot application..."
+                bat 'mvn clean package -DskipTests'
+                echo "Spring Boot build completed."
+            }
+
+            post {
+                success {
+                    echo "Archiving generated JAR file..."
+                    archiveArtifacts artifacts: 'target/*.jar', fingerprint: true
+                }
+            }
+        }
+
+        stage('Build Docker Image') {
+            steps {
+                echo "Building Docker image..."
+                echo "Image name: ${IMAGE_NAME}:${IMAGE_TAG}"
+
+                bat """
+                    docker build ^
+                    -t %IMAGE_NAME%:%IMAGE_TAG% ^
+                    -t %IMAGE_NAME%:latest .
+                """
+
+                echo "Docker image build completed."
+            }
+        }
+
+        stage('Docker Login') {
+            steps {
+                echo "Logging into Docker registry..."
+
+                withCredentials([
+                    usernamePassword(
+                        credentialsId: 'dockerhub-creds',
+                        usernameVariable: 'DOCKER_USERNAME',
+                        passwordVariable: 'DOCKER_PASSWORD'
+                    )
+                ]) {
+                    bat 'echo|set /p="%DOCKER_PASSWORD%" | docker login -u %DOCKER_USERNAME% --password-stdin'
+                }
+
+                echo "Docker login successful."
+            }
+        }
+
+        stage('Push Docker Image') {
+            steps {
+                echo "Pushing Docker image: ${IMAGE_NAME}:${IMAGE_TAG}"
+
+                bat """
+                    docker push %IMAGE_NAME%:%IMAGE_TAG%
+                    docker push %IMAGE_NAME%:latest
+                """
+
+                echo "Docker image pushed successfully."
+            }
+        }
+
+        stage('Deploy') {
+            steps {
+                echo "Stopping existing containers..."
+
+                bat """
+                    docker compose -f dockercompose.yaml down
+                """
+
+                echo "Starting containers using Docker Compose..."
+
+                bat """
+                    docker compose -f dockercompose.yaml up -d
+                """
+
+                echo "Deployment completed successfully."
+            }
+        }
+    }
+
+    post {
+        always {
+            echo "Cleaning up Docker session..."
+            bat "docker logout || exit 0"
+        }
+
+        success {
+            echo "Pipeline completed successfully."
+        }
+
+        failure {
+            echo "Pipeline failed. Please check the logs above."
+        }
+    }
+}
