@@ -1,0 +1,5 @@
+target
+.git
+.vscode
+.mvn/wrapper/*.jar
+*.md

@@ -1,0 +1,19 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "java",
+            "name": "TestprjApplication",
+            "request": "launch",
+            "mainClass": "com.testprj.testprj.TestprjApplication",
+            "projectName": "testprj",
+            "env": {
+                "DB_URL": "jdbc:mysql://localhost:3345/testprj_db?createDatabaseIfNotExist=true",
+                "DB_USERNAME": "root",
+                "DB_PASSWORD": "1234"
+            }
+        }
+    ]
+}
